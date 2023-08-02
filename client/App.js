@@ -1,19 +1,25 @@
-import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { FlatList, SafeAreaView, StyleSheet, Text, View } from "react-native";
-import { data } from "./service/conexion";
+import { Text, FlatList, SafeAreaView, StyleSheet } from "react-native";
+import InputTask from "./components/InputTask";
 import Task from "./components/Task";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { StatusBar } from "expo-status-bar";
 
 export default function App() {
   const [todos, setTodos] = useState([]);
 
   useEffect(() => {
-    fetchData();
+    fetchTodos();
   }, []);
 
-  async function fetchData() {
-    setTodos(await data());
+  async function fetchTodos() {
+    const response = await fetch("http://192.168.0.108:8080/todos/1", {
+      headers: {
+        "x-api-key": "abcdef123456",
+      },
+    });
+    const data = await response.json();
+    setTodos(data);
   }
 
   function clearTodo(id) {
@@ -32,20 +38,19 @@ export default function App() {
 
   return (
     <BottomSheetModalProvider>
-      <View style={styles.container}>
-        <SafeAreaView>
-          <FlatList
-            data={todos}
-            keyExtractor={(todo) => todo.id}
-            renderItem={({ item }) => (
-              <Task {...item} toggleTodo={toggleTodo} clearTodo={clearTodo} />
-            )}
-            ListHeaderComponent={() => <Text style={styles.title}>today</Text>}
-            contentContainerStyle={styles.contentContainerStyle}
-          />
-        </SafeAreaView>
-        <StatusBar style="auto" />
-      </View>
+      <StatusBar />
+      <SafeAreaView style={styles.container}>
+        <FlatList
+          data={todos}
+          contentContainerStyle={styles.contentContainerStyle}
+          keyExtractor={(todo) => todo.id}
+          renderItem={({ item }) => (
+            <Task {...item} toggleTodo={toggleTodo} clearTodo={clearTodo} />
+          )}
+          ListHeaderComponent={() => <Text style={styles.title}>Today</Text>}
+        />
+        <InputTask todos={todos} setTodos={setTodos} />
+      </SafeAreaView>
     </BottomSheetModalProvider>
   );
 }
@@ -53,10 +58,10 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#E9E9EF",
   },
   contentContainerStyle: {
-    padding: 20,
+    padding: 15,
   },
   title: {
     fontWeight: "800",
