@@ -1,7 +1,9 @@
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { FlatList, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { data } from "./service/conexion";
+import Task from "./components/Task";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 export default function App() {
   const [todos, setTodos] = useState([]);
@@ -14,13 +16,37 @@ export default function App() {
     setTodos(await data());
   }
 
-  console.log(todos);
+  function clearTodo(id) {
+    setTodos(todos.filter((todo) => todo.id !== id));
+  }
+
+  function toggleTodo(id) {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id
+          ? { ...todo, completed: todo.completed === 1 ? 0 : 1 }
+          : todo
+      )
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text>{JSON.stringify(todos)}</Text>
-      <StatusBar style="auto" />
-    </View>
+    <BottomSheetModalProvider>
+      <View style={styles.container}>
+        <SafeAreaView>
+          <FlatList
+            data={todos}
+            keyExtractor={(todo) => todo.id}
+            renderItem={({ item }) => (
+              <Task {...item} toggleTodo={toggleTodo} clearTodo={clearTodo} />
+            )}
+            ListHeaderComponent={() => <Text style={styles.title}>today</Text>}
+            contentContainerStyle={styles.contentContainerStyle}
+          />
+        </SafeAreaView>
+        <StatusBar style="auto" />
+      </View>
+    </BottomSheetModalProvider>
   );
 }
 
@@ -28,7 +54,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
+  },
+  contentContainerStyle: {
+    padding: 20,
+  },
+  title: {
+    fontWeight: "800",
+    fontSize: 28,
+    marginBottom: 15,
   },
 });

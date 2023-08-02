@@ -10,20 +10,37 @@ import {
   getUserByID,
   getSharedTodoByID,
 } from "./database.js";
-// import cors from "cors";
+import bodyParser from "body-parser";
+import cors from "cors";
 
-// const corsOptions = {
-//   // origin: "", //especifica el origen permitido
-//   methods: ["POST", "GET"], //especificar los métodos permitidos
-//   credentials: true, //permitir el envío de credenciales (cookies, autenticación)
-// };
+const corsOptions = {
+  // origin: "http://127.0.0.1:5173", // specify the allowed origin
+  methods: ["POST", "GET"], // specify the allowed methods
+  credentials: true, // allow sending credentials (cookies, authentication)
+};
+
+const developers = [
+  { id: 1, name: "John Doe", apiKey: "abcdef123456" },
+  { id: 2, name: "Jane Doe", apiKey: "ghijkl789012" },
+];
+
+const ckeckApiKey = (req, res, next) => {
+  const apiKey = req.headers["x-api-key"];
+  const developer = developers.find((d) => d.apiKey === apiKey); //check if we have a dev with that key
+  if (!developer) {
+    return res.status(401).json({ message: "Unauthorized, invalid Api Key" });
+  }
+  req.developer = developer;
+  next();
+};
+
 const app = express();
-/* Para utilizar funciones de la aplicacion y 
-avisarle que le haga caso solo al request */
+app.use(bodyParser.json());
 app.use(express.json());
-// app.use(cors(corsOptions));
+// app.use(cors());
+app.use(cors(corsOptions));
+app.use(ckeckApiKey);
 
-/* REQUEST */
 app.get("/todos/:id", async (req, res) => {
   const todos = await getTodosByID(req.params.id);
   res.status(200).send(todos);
@@ -54,10 +71,12 @@ app.delete("/todos/:id", async (req, res) => {
 
 app.post("/todos/shared_todos", async (req, res) => {
   const { todo_id, user_id, email } = req.body;
+  // const { todo_id, user_id, shared_with_id } = req.body;
   const userToShare = await getUserByEmail(email);
   const sharedTodo = await shareTodo(todo_id, user_id, userToShare.id);
   res.status(201).send(sharedTodo);
 });
+
 
 app.post("/todos", async (req, res) => {
   const { user_id, title } = req.body;
@@ -65,6 +84,8 @@ app.post("/todos", async (req, res) => {
   res.status(201).send(todo);
 });
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+app.listen(8080, () => {
+  console.log("Server running on port 8080");
 });
+
+////////////////////////////////////////////////////////////////////
